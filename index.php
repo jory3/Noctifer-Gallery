@@ -25,8 +25,8 @@ error_reporting(0);
 ### configuration ###
 
 # meta data
-$description = "Photo gallery using the Noctifer Directory Gallery Script";
-$author = "Laurens R Krol";
+$description = "Zeitraffer Standaufbau";
+$author = "Swissrail";
 
 # this script will automatically create thumbnails in a new subdirectory if any are missing.
 # make sure that the script has permission to make these write actions.
@@ -87,7 +87,7 @@ if ( $dh = opendir( '.' ) ) {
                 # adding allowed image file types to image list
                 $imageList[] = $info['filename'] . "." . $info['extension'];
             }
-        } else if ( is_dir($itemName) && $itemName != "." && $itemName != $thumbnailDirectory ) {
+        } else if ( is_dir($itemName) && $itemName != "." && $itemName != $thumbnailDirectory && $itemName != '.idea' && $itemName != '.git' ) {
             # adding non-thumbnail directories to directory list
             $dirList[] = $itemName;
 
@@ -104,7 +104,8 @@ if ( $dh = opendir( '.' ) ) {
 closedir($dh);
 
 # sorting lists alphabetically
-usort( $imageList, 'strnatcasecmp' );
+//usort( $imageList, 'strnatcasecmp' );
+rsort( $imageList );
 usort( $dirList, 'strnatcasecmp' );
 
 # determining page mode, setting variables
@@ -578,9 +579,11 @@ if ($mode == 'view') {
         $bgCode = "";
     }
 
+    $photodate = photo_date($photo);
+
     echo <<<END
     <div id="viewContainer">
-        <div id="viewTitleContainer"><div id="viewTitle"><a href="$photo">$photo <svg id="viewTitleArrow" version="1.1" viewBox="0 0 1000 1500" xmlns="http://www.w3.org/2000/svg"><path d="M536 1500l-464 -445 270 0 0 -631c0,-142 -23,-240 -69,-294 -46,-55 -128,-82 -246,-82l-27 0 0 -48 196 0c132,0 228,10 288,30 60,20 113,59 157,117 60,77 89,208 89,392l0 516 270 0 -464 445z" /></svg></a></div></div>
+        <div id="viewTitleContainer"><div id="viewTitle"><a href="$photo">$photodate <svg id="viewTitleArrow" version="1.1" viewBox="0 0 1000 1500" xmlns="http://www.w3.org/2000/svg"><path d="M536 1500l-464 -445 270 0 0 -631c0,-142 -23,-240 -69,-294 -46,-55 -128,-82 -246,-82l-27 0 0 -48 196 0c132,0 228,10 288,30 60,20 113,59 157,117 60,77 89,208 89,392l0 516 270 0 -464 445z" /></svg></a></div></div>
         <div id="viewPhotoContainer"><div id="viewPhoto" $bgCode onclick="toggleView('$photoUrl');">$imgCode</div></div>
         <div id="viewControlsContainer"><div id="viewControls"><a id="aFirst" href="?view=$firstUrl">&#x25c4;&#x25c4;</a>&nbsp;<a id="aPrevious" href="?view=$previousUrl">&#x25c4;</a>&nbsp;<a id="aClose" href=".">&#x2715;</a>&nbsp;<a id="aNext" href="?view=$nextUrl">&#x25ba;</a>&nbsp;<a id="aLast" href="?view=$lastUrl">&#x25ba;&#x25ba;</a></div></div>
     </div>
@@ -588,14 +591,14 @@ if ($mode == 'view') {
 END;
 } else {
     # photo browser
-    echo "<div id=\"browseTitle\">Contents of <b>" . str_replace('/', ' &rarr; ', substr($currentDir, 1)) . "</b> (" . count($imageList) . " images)</div>\n";
+    //echo "<div id=\"browseTitle\">Contents of <b>" . str_replace('/', ' &rarr; ', substr($currentDir, 1)) . "</b> (" . count($imageList) . " images)</div>\n";
     echo "<div id=\"browseContainer\">\n";
 
     foreach ( $dirList as $dir ) {
         $directoryUrl = rawurlencode($dir);
         if ($dir == '..') { $dir = "Back"; }
 
-        echo "    <a class=\"directoryLink\" href=\"$directoryUrl\"><span class=\"directoryLinkArrow\">" . ($dir == "Back" ? "&#x25c4;" : "&#x25ba;") . "</span> $dir</a><br />\n";
+        //echo "    <a class=\"directoryLink\" href=\"$directoryUrl\"><span class=\"directoryLinkArrow\">" . ($dir == "Back" ? "&#x25c4;" : "&#x25ba;") . "</span> $dir</a><br />\n";
     }
 
     if ( sizeof( $dirList ) == 0 && sizeof( $imageList ) == 0 ) {
@@ -611,7 +614,7 @@ END;
         $thumbnailUrl = rawurlencode($thumbnailPrefix . $image . ".jpg");
         $viewPhotoUrl = rawurlencode($image);
 
-        echo "    <a class=\"thumbnailLink\" href=\"?view=$viewPhotoUrl\"><div class=\"thumbnail\" style=\"background-image: url($thumbnailDirectory/$thumbnailUrl);\"><div class=\"thumbnailTitle\">$image</div></div></a>\n";
+        echo "    <a class=\"thumbnailLink\" href=\"?view=$viewPhotoUrl\"><div class=\"thumbnail\" style=\"background-image: url($thumbnailDirectory/$thumbnailUrl);\"><div class=\"thumbnailTitle\">" . photo_date($image) . "</div></div></a>\n";
     }
 
     echo "    <div id=\"browseFooter\"></div>\n";
@@ -622,3 +625,12 @@ END;
 
 </body>
 </html>
+
+<?php
+function photo_date($photo){
+    $timestamp = preg_split('/\./', $photo);
+    $str = date('d.m.y, H:i', $timestamp[0]+7200);
+
+    return $str;
+}
+?>
